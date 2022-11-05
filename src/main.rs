@@ -8,8 +8,8 @@ fn main() {
     let state = games::NaC::new();
 
     let mut game = game::Game::new(state, vec![
+        Box::new(players::MinMax::new()),
         Box::new(players::InputPlayer::new(io::stdin().lock())),
-        Box::new(players::RandomPlayer::new(rand::thread_rng())),
     ]);
 
     game.play();

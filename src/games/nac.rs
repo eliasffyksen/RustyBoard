@@ -9,6 +9,7 @@ pub struct NaC {
     player_turn: usize,
     board: [usize; 9],
     terminal: bool,
+    draw: bool,
     actions: Vec<NaCAction>
 }
 
@@ -53,10 +54,52 @@ impl NaC {
 
     pub fn new() -> NaC {
         NaC {
+            draw: false,
             player_turn: 0,
             board: [0; 9],
             terminal: false,
             actions: (0..9).collect()
+        }
+    }
+
+    fn set_terminal(&mut self) {
+        if self.actions.len() == 0 {
+            self.terminal = true;
+            self.draw = true;
+            return;
+        }
+
+        self.terminal = false;
+        self.draw = false;
+
+        // Check terminal
+        // Check row
+        for row in 0..3 {
+            if  self.check_row(row) {
+                self.terminal = true;
+            }
+        }
+
+        // Check col
+        for col in 0..3 {
+            if  self.check_col(col) {
+                self.terminal = true;
+            }
+        }
+
+        // Check diagonals
+        if self.board[4] != 0 {
+            // Check diagonal 1
+            if self.board[4] == self.board[0]
+                && self.board[4] == self.board[8] {
+                self.terminal = true;
+            }
+
+            // Check diagnoal 2
+            if self.board[4] == self.board[2]
+                && self.board[4] == self.board[6] {
+                self.terminal = true;
+            }
         }
     }
 }
@@ -94,50 +137,14 @@ impl game::State<NaCAction> for NaC {
             player_turn: (self.player_turn + 1) % 2,
             board: self.board.clone(),
             terminal: false,
+            draw: false,
             actions: self.actions.clone()
         };
 
         let action = new_state.actions.remove(action);
         new_state.board[action] = self.player_turn + 1;
 
-        if new_state.actions.len() == 0 {
-            new_state.terminal = true;
-            return new_state;
-        }
-
-        // Check terminal
-        // Check row
-        for row in 0..3 {
-            if  new_state.check_row(row) {
-                new_state.terminal = true;
-                return new_state
-            }
-        }
-
-        // Check col
-        for col in 0..3 {
-            if  new_state.check_col(col) {
-                new_state.terminal = true;
-                return new_state
-            }
-        }
-
-        // Check diagonals
-        if new_state.board[4] != 0 {
-            // Check diagonal 1
-            if new_state.board[4] == new_state.board[0]
-                && new_state.board[4] == new_state.board[8] {
-                new_state.terminal = true;
-                return new_state;
-            }
-
-            // Check diagnoal 2
-            if new_state.board[4] == new_state.board[2]
-                && new_state.board[4] == new_state.board[6] {
-                new_state.terminal = true;
-                return new_state;
-            }
-        }
+        new_state.set_terminal();
 
         new_state
     }
@@ -147,12 +154,12 @@ impl game::State<NaCAction> for NaC {
     }
 
     fn get_score(&self, player: usize) -> i32 {
-        if !self.terminal {
+        if !self.terminal || self.draw {
             return 0;
         }
 
         if player == self.player_turn {
-            0
+            -1
         } else {
             1
         }
